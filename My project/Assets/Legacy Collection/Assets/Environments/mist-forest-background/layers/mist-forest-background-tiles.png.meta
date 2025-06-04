@@ -42,12 +42,12 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -101,9 +101,42 @@ TextureImporter:
     overridden: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: mist-forest-background-tiles_14
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 16
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 21cab475663d8244490739a71bf99f4e
+      internalID: -1747700647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -114,7 +147,23 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      mist-forest-background-tiles_0: -529152769
+      mist-forest-background-tiles_1: 790572837
+      mist-forest-background-tiles_10: -61560198
+      mist-forest-background-tiles_11: 1958429221
+      mist-forest-background-tiles_12: -1991858680
+      mist-forest-background-tiles_13: 1947222256
+      mist-forest-background-tiles_14: -1747700647
+      mist-forest-background-tiles_15: 169558732
+      mist-forest-background-tiles_2: -966078179
+      mist-forest-background-tiles_3: -1166541821
+      mist-forest-background-tiles_4: 567280124
+      mist-forest-background-tiles_5: -1649426208
+      mist-forest-background-tiles_6: -1863589496
+      mist-forest-background-tiles_7: 1001347874
+      mist-forest-background-tiles_8: 731275238
+      mist-forest-background-tiles_9: -1082099251
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
