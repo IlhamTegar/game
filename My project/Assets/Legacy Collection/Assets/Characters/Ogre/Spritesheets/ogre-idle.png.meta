@@ -120,12 +120,12 @@ TextureImporter:
       name: ogre-idle_0
       rect:
         serializedVersion: 2
-        x: 30
+        x: 0
         y: 0
-        width: 64
-        height: 58
+        width: 95
+        height: 76
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -141,12 +141,12 @@ TextureImporter:
       name: ogre-idle_1
       rect:
         serializedVersion: 2
-        x: 172
+        x: 144
         y: 0
-        width: 66
-        height: 58
+        width: 95
+        height: 76
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -162,12 +162,12 @@ TextureImporter:
       name: ogre-idle_2
       rect:
         serializedVersion: 2
-        x: 315
+        x: 289
         y: 0
-        width: 68
-        height: 59
+        width: 95
+        height: 76
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -183,12 +183,12 @@ TextureImporter:
       name: ogre-idle_3
       rect:
         serializedVersion: 2
-        x: 460
+        x: 432
         y: 0
-        width: 66
-        height: 58
+        width: 95
+        height: 76
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []

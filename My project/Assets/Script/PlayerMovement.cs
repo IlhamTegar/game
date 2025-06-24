@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using TMPro;
+using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -16,13 +17,11 @@ public class PlayerMovement : MonoBehaviour
     private SpriteRenderer sprite;
     private PlayerController playerController;
 
-    // Untuk input dari button UI
     private float mobileInputX = 0f;
-
     private Vector2 moveInput;
     private bool isJumping = false;
 
-    private enum MovementState { idle, jump, fall, walk, run, attack, airAttack }
+    private enum MovementState { idle, jump, fall, walk, run, attack }
 
     [Header("Jump Settings")]
     [SerializeField] private LayerMask jumpableGround;
@@ -31,16 +30,17 @@ public class PlayerMovement : MonoBehaviour
     [Header("Health System")]
     public int maxHealth = 100;
     public int currentHealth;
-    public TextMeshProUGUI healthText;
+    public Image healthBarImage;
 
-    [Header("knockback Settings")]
-    [SerializeField] private float knockBackTime = 0.2f;
-    [SerializeField] private float knockBackThrust = 10f;
+    [Header("Knockback Settings")]
+    [SerializeField] private float knockBackThrust = 20f;
+    [SerializeField] private float knockBackTime = 0.5f;
     private bool isKnockedBack = false;
 
     [Header("Attack Settings")]
-    public GameObject slashEffect;
-    public GameObject airSlashEffect;
+    public Transform attackPoint;
+    public float attackRange = 1.5f;
+    public LayerMask enemyLayer;
 
     private bool isAttacking = false;
     private MovementState currentState;
@@ -53,7 +53,6 @@ public class PlayerMovement : MonoBehaviour
         coll = GetComponent<BoxCollider2D>();
 
         playerController = new PlayerController();
-
         currentHealth = maxHealth;
         UpdateHealthUI();
     }
@@ -61,10 +60,8 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable()
     {
         playerController.Enable();
-
         playerController.Movement.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
         playerController.Movement.Move.canceled += ctx => moveInput = Vector2.zero;
-
         playerController.Movement.Jump.performed += ctx => Jump();
         playerController.Movement.Attack.performed += ctx => PerformAttack();
     }
@@ -76,21 +73,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (Application.isMobilePlatform)
-        {
-            moveInput = new Vector2(mobileInputX, 0f);
-        }
-        else
-        {
-            moveInput = playerController.Movement.Move.ReadValue<Vector2>();
-        }
+        moveInput = Application.isMobilePlatform ? new Vector2(mobileInputX, 0f) : playerController.Movement.Move.ReadValue<Vector2>();
     }
 
     private void FixedUpdate()
     {
+        if (isKnockedBack)
+        {
+            UpdateAnimation();
+            return;
+        }
+
         if (isAttacking && currentState == MovementState.attack)
         {
-            // Diam di tempat hanya saat attack biasa (grounded attack)
             rb.velocity = new Vector2(0f, rb.velocity.y);
         }
         else
@@ -98,8 +93,6 @@ public class PlayerMovement : MonoBehaviour
             Vector2 targetVelocity = new Vector2((moveInput.x + mobileInputX) * moveSpeed, rb.velocity.y);
             rb.velocity = targetVelocity;
         }
-
-        if (isKnockedBack) return;
 
         UpdateAnimation();
 
@@ -109,46 +102,51 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-
     private void UpdateAnimation()
     {
         if (isAttacking)
         {
-            // Prioritaskan animasi attack
-            anim.SetInteger("state", (int)currentState);
+            anim.SetInteger("state", (int)MovementState.attack);
             return;
         }
 
         MovementState state;
-
         float horizontal = moveInput.x != 0 ? moveInput.x : mobileInputX;
 
         if (horizontal > 0f)
         {
             state = MovementState.walk;
             sprite.flipX = false;
+            UpdateAttackPointDirection(1f);
         }
         else if (horizontal < 0f)
         {
             state = MovementState.walk;
             sprite.flipX = true;
+            UpdateAttackPointDirection(-1f);
         }
         else
         {
             state = MovementState.idle;
         }
 
-        if (rb.velocity.y > 0.1f)
+        if (!isGrounded())
         {
-            state = MovementState.jump;
-        }
-        else if (rb.velocity.y < -0.1f)
-        {
-            state = MovementState.fall;
+            if (rb.velocity.y > 0.1f) state = MovementState.jump;
+            else if (rb.velocity.y < -0.1f) state = MovementState.fall;
         }
 
         currentState = state;
         anim.SetInteger("state", (int)state);
+    }
+
+    private void UpdateAttackPointDirection(float xDir)
+    {
+        if (attackPoint == null) return;
+
+        Vector3 localPos = attackPoint.localPosition;
+        localPos.x = Mathf.Abs(localPos.x) * Mathf.Sign(xDir);
+        attackPoint.localPosition = localPos;
     }
 
     private bool isGrounded()
@@ -167,90 +165,101 @@ public class PlayerMovement : MonoBehaviour
 
     private void PerformAttack()
     {
-        if (isAttacking) return;
+        if (isAttacking || !isGrounded()) return; // Tidak bisa menyerang di udara
 
         isAttacking = true;
+        currentState = MovementState.attack;
+        anim.SetInteger("state", (int)currentState);
 
-        if (isGrounded())
-        {
-            currentState = MovementState.attack;
-            anim.SetInteger("state", (int)currentState);
-            if (slashEffect != null)
-                Instantiate(slashEffect, transform.position, Quaternion.identity);
-        }
-        else
-        {
-            currentState = MovementState.airAttack;
-            anim.SetInteger("state", (int)currentState);
-            if (airSlashEffect != null)
-                Instantiate(airSlashEffect, transform.position, Quaternion.identity);
-        }
-
+        DealDamageToEnemy();
         StartCoroutine(ResetAttack());
     }
 
+    public void MobileAttack() => PerformAttack();
+
     private IEnumerator ResetAttack()
     {
-        yield return new WaitForSeconds(1.05f); // Sesuaikan durasi animasi attack
+        yield return new WaitForSeconds(1.05f);
         isAttacking = false;
     }
 
-    public void MoveRight(bool isPressed)
+    private void DealDamageToEnemy()
     {
-        if (isPressed)
-            mobileInputX = 1f;
-        else if (mobileInputX == 1f)
-            mobileInputX = 0f;
-    }
-
-    public void MoveLeft(bool isPressed)
-    {
-        if (isPressed)
-            mobileInputX = -1f;
-        else if (mobileInputX == -1f)
-            mobileInputX = 0f;
-    }
-
-    public void MobileJump()
-    {
-        if (isGrounded())
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
+        foreach (Collider2D enemy in hitEnemies)
         {
-            Jump();
+            Musuh musuhScript = enemy.GetComponent<Musuh>();
+            if (musuhScript != null)
+            {
+                int randomDamage = Random.Range(25, 40);
+                Vector2 knockDir = (enemy.transform.position - transform.position).normalized;
+                musuhScript.TakeDamage(randomDamage, knockDir, true);
+            }
         }
     }
 
+    public void MoveRight(bool isPressed) => mobileInputX = isPressed ? 1f : 0f;
+    public void MoveLeft(bool isPressed) => mobileInputX = isPressed ? -1f : 0f;
+    public void MobileJump() { if (isGrounded()) Jump(); }
+
     public void TakeDamage(int damage, Vector2 direction)
     {
-        if (isKnockedBack) return; // Jangan stack knockback
+        if (isKnockedBack) return;
 
         currentHealth -= damage;
         if (currentHealth <= 0)
         {
             currentHealth = 0;
             Debug.Log("Player Mati");
+            FindObjectOfType<LoadScene>().ShowGameOverScreen();
         }
 
+        isKnockedBack = true;
         StartCoroutine(HandleKnockback(direction.normalized));
         UpdateHealthUI();
     }
 
-
     private void UpdateHealthUI()
     {
-        if (healthText != null)
-            healthText.text = "Health: " + currentHealth;
+        if (healthBarImage != null)
+        {
+            float fill = Mathf.Clamp01((float)currentHealth / maxHealth);
+            healthBarImage.fillAmount = fill;
+            Debug.Log("Bar HP di-update: " + fill + ", Ref: " + healthBarImage.name);
+        }
+        else
+        {
+            Debug.LogWarning("healthBarImage belum di-assign!");
+        }
     }
 
     private IEnumerator HandleKnockback(Vector2 direction)
     {
         isKnockedBack = true;
         rb.velocity = Vector2.zero;
-
         Vector2 force = direction * knockBackThrust * rb.mass;
         rb.AddForce(force, ForceMode2D.Impulse);
-
         yield return new WaitForSeconds(knockBackTime);
         rb.velocity = Vector2.zero;
         isKnockedBack = false;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+        }
+    }
+
+    public void Heal(int amount)
+    {
+        currentHealth += amount;
+        if (currentHealth > maxHealth)
+            currentHealth = maxHealth;
+
+        UpdateHealthUI(); // ⬅ Penting agar bar terupdate
+        Debug.Log("Healed: " + amount + ", Current Health: " + currentHealth);
     }
 }
